@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Empresa</title>
+    <link rel="stylesheet" href="\..\public\css\login.css">
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <!-- Substitua pelo caminho da sua logo -->
+            <img src="/../public/images/logo.png" alt="Logo da Empresa">
+            <h1></h1>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="login-card">
+            <h2>Faça seu login</h2>
+            <form id="loginForm" action="/login/auth" method="POST">
+                <div class="input-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" placeholder="Digite seu e-mail" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+                </div>
+                <div class="remember-forgot">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Lembrar-me</label>
+                    </div>
+                    <div class="forgot-password">
+                        <a href="#">Esqueci minha senha</a>
+                    </div>
+                </div>
+                <button type="submit" class="login-button">Entrar</button>
+            </form>
+            <div class="signup-link">
+                Não tem uma conta? <a href="register.html">Cadastre-se</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="\..\public\js\login.js">
+    </script>
+</body>
+
+</html>
