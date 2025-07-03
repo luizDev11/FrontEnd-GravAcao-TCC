@@ -1,3 +1,19 @@
+// Verifica se o usuário está logado ao carregar a página
+const token = localStorage.getItem("jwtToken");
+if (!token) {
+    window.location.href = "login.html"; // Redireciona se não houver token
+}
+
+// Opcional: Verifica se o token é válido (mesma lógica do login)
+fetch("http://localhost:8080/api/auth/validate-token", {
+    headers: { "Authorization": `Bearer ${token}` }
+})
+.then(response => {
+    if (!response.ok) {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+});
 // Função para navegação
 function navigateTo(page) {
     window.location.href = page;

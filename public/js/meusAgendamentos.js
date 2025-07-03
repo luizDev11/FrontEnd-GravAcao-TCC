@@ -1,29 +1,39 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Elementos da página
     const agendamentosList = document.getElementById('agendamentosList');
     const novoAgendamentoBtn = document.getElementById('novoAgendamentoBtn');
-    
-    // Configuração dos listeners
+    const API_BASE_URL = "http://localhost:8080/api"; // Ajuste para sua URL backend
+    const token = localStorage.getItem("jwtToken");
+
+    if (!token) {
+        // Se não tiver token, redireciona para login
+        window.location.href = "login.html";
+        return;
+    }
+
     novoAgendamentoBtn.addEventListener('click', redirectToNewAgendamento);
-    
-    // Carrega os agendamentos ao iniciar
+
     loadAgendamentos();
-    
-    // Função para carregar os agendamentos
+
     async function loadAgendamentos() {
         try {
             showLoading();
-            
-            // Simulação de requisição à API (substitua pelo seu endpoint real)
-            const response = await fetch('http://localhost:3000/agendamento');
-            
+
+            // Endpoint para buscar agendamentos do usuário logado
+            const response = await fetch(`${API_BASE_URL}/agendamentos2/meus-agendamentos`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
             if (!response.ok) {
                 throw new Error('Erro ao carregar agendamentos');
             }
-            
+
             const agendamentos = await response.json();
-            
-            if (agendamentos.length === 0) {
+
+            if (!agendamentos || agendamentos.length === 0) {
                 showEmptyMessage();
             } else {
                 renderAgendamentos(agendamentos);
@@ -33,25 +43,22 @@ document.addEventListener('DOMContentLoaded', function() {
             showErrorMessage();
         }
     }
-    
-    // Função para renderizar os agendamentos na tela
+
     function renderAgendamentos(agendamentos) {
         agendamentosList.innerHTML = '';
-        
+
         agendamentos.forEach(agendamento => {
             const agendamentoCard = createAgendamentoCard(agendamento);
             agendamentosList.appendChild(agendamentoCard);
         });
     }
-    
-    // Função para criar o card de um agendamento
+
     function createAgendamentoCard(agendamento) {
         const card = document.createElement('div');
         card.className = 'agendamento-card';
-        
-        // Formata a data para exibição
+
         const dataFormatada = formatDate(agendamento.data);
-        
+
         card.innerHTML = `
             <div class="agendamento-header">
                 <h3 class="agendamento-title">${agendamento.solicitante}</h3>
@@ -81,58 +88,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button class="danger-button" data-id="${agendamento.id}">Cancelar</button>
             </div>
         `;
-        
-        // Adiciona o listener para o botão de cancelar
+
         card.querySelector('.danger-button').addEventListener('click', function() {
             cancelAgendamento(this.dataset.id);
         });
-        
+
         return card;
     }
-    
-    // Função para formatar a data
+
     function formatDate(dateString) {
         const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
         return new Date(dateString).toLocaleDateString('pt-BR', options);
     }
-    
-    // Função para cancelar um agendamento
+
     async function cancelAgendamento(id) {
         if (!confirm('Tem certeza que deseja cancelar este agendamento?')) {
             return;
         }
-        
+
         try {
-            const response = await fetch(`http://localhost:3000/agendamentos/${id}`, {
-                method: 'DELETE'
+            const response = await fetch(`${API_BASE_URL}/agendamento/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
             });
-            
+
             if (!response.ok) {
                 throw new Error('Erro ao cancelar agendamento');
             }
-            
+
             alert('Agendamento cancelado com sucesso!');
-            loadAgendamentos(); // Recarrega a lista
+            loadAgendamentos();
         } catch (error) {
             console.error('Erro:', error);
             alert('Erro ao cancelar agendamento. Por favor, tente novamente.');
         }
     }
-    
-    // Função para redirecionar para novo agendamento
+
     function redirectToNewAgendamento() {
         window.location.href = 'agendamento.html';
     }
-    
-    // Funções auxiliares para estados da página
+
     function showLoading() {
         agendamentosList.innerHTML = '<div class="loading-message">Carregando seus agendamentos...</div>';
     }
-    
+
     function showEmptyMessage() {
         agendamentosList.innerHTML = '<div class="empty-message">Nenhum agendamento encontrado.</div>';
     }
-    
+
     function showErrorMessage() {
         agendamentosList.innerHTML = '<div class="error-message">Erro ao carregar agendamentos. Por favor, tente novamente.</div>';
     }
