@@ -6,14 +6,19 @@ if (!token) {
 
 // Opcional: Verifica se o token é válido (mesma lógica do login)
 fetch("http://localhost:8080/api/auth/validate-token", {
-    headers: { "Authorization": `Bearer ${token}` }
+    headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+    },
+    credentials: 'include' // Adicione esta linha para consistência
 })
-.then(response => {
-    if (!response.ok) {
-        localStorage.clear();
-        window.location.href = "login.html";
-    }
-});
+
+    .then(response => {
+        if (!response.ok) {
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+    });
 // Função para navegação
 function navigateTo(page) {
     window.location.href = page;

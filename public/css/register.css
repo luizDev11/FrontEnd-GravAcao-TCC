@@ -254,7 +254,9 @@ header {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Melhoria para o checkbox de termos */
@@ -268,11 +270,11 @@ header {
     .register-card {
         padding: 1.5rem;
     }
-    
+
     header {
         padding: 1rem;
     }
-    
+
     .logo h1 {
         font-size: 1.2rem;
     }
@@ -280,8 +282,113 @@ header {
     .terms-actions {
         flex-direction: column;
     }
-    
+
     .terms-content {
         padding: 1.5rem;
     }
+}
+
+/* Mensagens de erro/sucesso */
+.error-message {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #c62828;
+}
+
+.success-message {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #2e7d32;
+}
+
+/* Spinner */
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Validação de campos */
+.input-group.error input {
+    border-color: #c62828 !important;
+}
+
+.field-error {
+    color: #c62828;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* Estilo para o toggle de PF/PJ */
+.toggle-container {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.toggle-option {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    background: #f5f5f5;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.toggle-option.active {
+    background: #61A5C2;
+    color: white;
+}
+.logo img {
+    transition: all 0.3s ease;
+    height: 6rem;
+    width: 15rem;
+    object-fit: contain;
+}
+/* Adicione isso ao seu arquivo CSS */
+.theme-orange {
+    --primary-color: #E77D00;
+    --primary-hover: #C56800;
+}
+
+/* Atualize as cores que usam o azul para usar a variável */
+header {
+    background-color: var(--primary-color, #61A5C2);
+}
+
+.register-button {
+    background-color: var(--primary-color, #61A5C2);
+}
+
+.register-button:hover {
+    background-color: var(--primary-hover, #4d8ba5);
+}
+
+.toggle-option.active {
+    background: var(--primary-color, #61A5C2);
+    color: white;
+}
+
+.login-link a {
+    color: var(--primary-color, #61A5C2);
 }
