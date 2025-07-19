@@ -1,88 +1,44 @@
-document.getElementById('loginForm').addEventListener('submit', async function (e) {
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    // 1. Obtenção dos valores do formulário
+    // 1. Dados do formulário
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
-    // 2. Validação básica dos campos
     if (!email || !password) {
-        alert('Por favor, preencha todos os campos.');
+        alert('Preencha todos os campos!');
         return;
     }
 
     try {
-        // 3. Requisição de autenticação
+        // 2. Requisição de login
         const response = await fetch('http://localhost:8080/api/auth/authenticate', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                email: email, 
-                senha: password 
-            }),
-            credentials: 'include' // Importante para cookies/sessão
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, senha: password }),
+            credentials: 'include'
         });
 
-        // 4. Tratamento da resposta
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || 'Erro na autenticação');
+            throw new Error(errorData.message || 'Erro no login');
         }
 
-        // 5. Processamento do token
-        const { token } = await response.json();
-        
-        // Armazenamento seguro do token
-        localStorage.setItem('jwtToken', token);
-        // sessionStorage.setItem('jwtToken', token);
-        
-        // Decodificação do payload JWT
-        const payload = decodeJwtPayload(token);
-        
-        // 6. Redirecionamento baseado no perfil
-        setTimeout(() => {
-            const isProfessional = payload.roles?.includes('ROLE_PROFISSIONAL');
-            window.location.href = isProfessional 
-                ? '/views/inicialAdmin.html' 
-                : '/views/inicial.html';
-        }, 100);
+        // 3. Processar resposta
+        const { jwtToken, userData } = await response.json();
+        localStorage.setItem('jwtToken', jwtToken);
+        localStorage.setItem('userData', JSON.stringify(userData));
+
+        // 4. Redirecionar com base na role
+        if (userData.roles?.includes('ROLE_PROFISSIONAL')) {
+            window.location.href = '../views/inicialAdmin.html'; // Caminho para admin
+        } else {
+            window.location.href = '../views/inicial.html'; // Caminho para usuário comum
+        }
 
     } catch (error) {
-        // 7. Tratamento de erros
-        console.error('Erro durante o login:', error);
-        alert(error.message || 'Erro ao realizar login');
-        
-        // Limpeza de tokens inválidos
-        localStorage.removeItem('jwtToken');
-        sessionStorage.removeItem('jwtToken');
+        console.error('Erro no login:', error);
+        alert(error.message || 'Falha ao logar');
+        localStorage.clear();
     }
 });
-
-// Função auxiliar melhorada para decodificação JWT
-function decodeJwtPayload(token) {
-    try {
-        if (!token || typeof token !== 'string') {
-            throw new Error('Token inválido');
-        }
-        
-        const payloadBase64 = token.split('.')[1];
-        if (!payloadBase64) {
-            throw new Error('Estrutura do token inválida');
-        }
-        
-        // Decodificação segura com tratamento de Unicode
-        const payloadJson = decodeURIComponent(
-            atob(payloadBase64)
-                .split('')
-                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                .join('')
-        );
-        
-        return JSON.parse(payloadJson);
-    } catch (error) {
-        console.error('Erro ao decodificar token:', error);
-        return {};
-    }
-}

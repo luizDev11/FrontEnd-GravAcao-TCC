@@ -1,31 +1,30 @@
-// Função para navegação
-function navigateTo(page) {
-    window.location.href = page;
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Verificar autenticação e perfil
+    const token = localStorage.getItem('jwtToken');
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
 
-// Efeitos interativos
-document.addEventListener('DOMContentLoaded', function () {
-    const cards = document.querySelectorAll('.service-card');
+    if (!token) {
+        window.location.href = '../login.html';
+        return;
+    }
 
-    cards.forEach(card => {
-        // Efeito ao passar o mouse
-        card.addEventListener('mouseenter', function () {
-            this.style.transform = 'translateY(-5px)';
-            this.style.boxShadow = '0 10px 20px rgba(0,0,0,0.15)';
-        });
+    // 2. Se NÃO for profissional, redireciona para página comum
+    if (!userData.roles?.includes('ROLE_PROFISSIONAL')) {
+        window.location.href = '../views/inicial.html';
+        return;
+    }
 
-        // Efeito ao remover o mouse
-        card.addEventListener('mouseleave', function () {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
-        });
-
-        // Efeito de clique
-        card.addEventListener('click', function () {
-            this.style.transform = 'translateY(2px)';
-            setTimeout(() => {
-                this.style.transform = 'translateY(-5px)';
-            }, 100);
+    // 3. Efeitos interativos (apenas para admin)
+    const adminCards = document.querySelectorAll('.admin-card');
+    adminCards.forEach(card => {
+        card.addEventListener('click', () => {
+            card.style.transform = 'scale(0.98)';
+            setTimeout(() => card.style.transform = 'scale(1)', 200);
         });
     });
+
+    // Função global de navegação
+    window.navigateTo = function(page) {
+        window.location.href = page;
+    };
 });

@@ -1,52 +1,34 @@
-// Verifica se o usuário está logado ao carregar a página
-const token = localStorage.getItem("jwtToken");
-if (!token) {
-    window.location.href = "login.html"; // Redireciona se não houver token
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Verificar autenticação
+    const token = localStorage.getItem('jwtToken');
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
 
-// Opcional: Verifica se o token é válido (mesma lógica do login)
-fetch("http://localhost:8080/api/auth/validate-token", {
-    headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-    },
-    credentials: 'include' // Adicione esta linha para consistência
-})
+    if (!token) {
+        window.location.href = 'login.html'; // Redireciona se não logado
+        return;
+    }
 
-    .then(response => {
-        if (!response.ok) {
-            localStorage.clear();
-            window.location.href = "login.html";
-        }
-    });
-// Função para navegação
-function navigateTo(page) {
-    window.location.href = page;
-}
+    // 2. Se for profissional, redireciona para admin
+    if (userData.roles?.includes('ROLE_PROFISSIONAL')) {
+        window.location.href = '../views/inicialAdmin.html';
+        return;
+    }
 
-// Efeitos interativos
-document.addEventListener('DOMContentLoaded', function () {
+    // 3. Efeitos interativos (apenas para usuários comuns)
     const cards = document.querySelectorAll('.service-card');
-
     cards.forEach(card => {
-        // Efeito ao passar o mouse
-        card.addEventListener('mouseenter', function () {
-            this.style.transform = 'translateY(-5px)';
-            this.style.boxShadow = '0 10px 20px rgba(0,0,0,0.15)';
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-5px)';
+            card.style.boxShadow = '0 10px 20px rgba(0,0,0,0.15)';
         });
-
-        // Efeito ao remover o mouse
-        card.addEventListener('mouseleave', function () {
-            this.style.transform = 'translateY(0)';
-            this.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
-        });
-
-        // Efeito de clique
-        card.addEventListener('click', function () {
-            this.style.transform = 'translateY(2px)';
-            setTimeout(() => {
-                this.style.transform = 'translateY(-5px)';
-            }, 100);
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+            card.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
         });
     });
+
+    // Função global de navegação
+    window.navigateTo = function(page) {
+        window.location.href = page;
+    };
 });
