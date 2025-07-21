@@ -1,74 +1,110 @@
 // Aguarda o carregamento completo do DOM
-document.addEventListener("DOMContentLoaded", () => {
-    // Exemplo de dados de agendamentos
-    const bookings = [
-        {
-            id: 1,
-            nome: "João Silva",
-            email: "joao@mail.com",
-            telefone: "(11) 99999-9999",
-            plano: "Avançado",
-            data: "2025-05-20",
-            horario: "14:00",
-            esporte: "Futebol",
-            local: "Estádio XYZ",
-            status: "Pendente"
-        },
-        {
-            id: 2,
-            nome: "Maria Souza",
-            email: "maria@mail.com",
-            telefone: "(21) 88888-8888",
-            plano: "Intermediário",
-            data: "2025-05-21",
-            horario: "16:00",
-            esporte: "Basquete",
-            local: "Ginásio ABC",
-            status: "Pendente"
-        }
-    ];
-
-    const tbody = document.querySelector("#bookingsTable tbody");
-
-    // Verifica se o tbody existe
-    if (!tbody) {
-        console.error("Elemento tbody não encontrado");
+document.addEventListener("DOMContentLoaded", async () => {
+    // Basic authentication check:
+    // This assumes you have a public/js/auth.js file that handles token storage
+    // and provides window.checkAuthentication() and window.getAuthToken() functions.
+    if (typeof window.checkAuthentication === 'function' && !window.checkAuthentication()) {
+        // If not authenticated, checkAuthentication should handle redirection
         return;
     }
 
-    // Função para renderizar os agendamentos na tabela
-    function renderBookings() {
-        tbody.innerHTML = "";
-        bookings.forEach((booking, index) => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td data-label="Data">${booking.data}</td>
-                <td data-label="Horário">${booking.horario}</td>
-                <td data-label="Acessar">
-                    <button class="btn btn-access" data-id="${booking.id}" data-index="${index}">Acessar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+    const tbody = document.querySelector("#bookingsTable tbody");
+    const token = (typeof window.getAuthToken === 'function') ? window.getAuthToken() : null;
+
+    if (!tbody) {
+        console.error("Elemento tbody com ID '#bookingsTable tbody' não encontrado.");
+        return;
     }
 
-    // Renderiza os agendamentos inicialmente
-    renderBookings();
+    if (!token) {
+        tbody.innerHTML = '<tr><td colspan="3">Erro de autenticação. Por favor, faça login novamente.</td></tr>';
+        console.error("Token de autenticação não encontrado. Redirecionando para login.");
+        // Optional: Redirect to login if token is missing
+        // window.location.href = 'login.html';
+        return;
+    }
 
-    // Delegação de evento para tratar cliques no botão "Acessar"
+    // Function to load and render bookings from the backend
+    async function loadAndRenderBookings() {
+        tbody.innerHTML = '<tr><td colspan="3">Carregando agendamentos...</td></tr>'; // Loading message
+
+        try {
+            // Fetch only 'PENDENTE' (pending) bookings for this admin view
+            const response = await fetch('http://localhost:8080/api/agendamentos2/pendentes', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 403) {
+                    tbody.innerHTML = '<tr><td colspan="3">Você não tem permissão para visualizar estes agendamentos.</td></tr>';
+                    console.warn("Acesso negado: O usuário autenticado não tem permissão para ver agendamentos pendentes.");
+                } else if (response.status === 401) {
+                    tbody.innerHTML = '<tr><td colspan="3">Sessão expirada. Por favor, faça login novamente.</td></tr>';
+                    console.error("Não autorizado: Token inválido ou expirado.");
+                    // Optional: Redirect to login or re-authenticate
+                    // window.checkAuthentication(); 
+                }
+                else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || response.statusText || 'Erro desconhecido ao carregar agendamentos.');
+                }
+                return;
+            }
+
+            const bookings = await response.json();
+
+            if (bookings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3">Não há agendamentos pendentes no momento.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = ""; // Clear the "Loading..." message
+            bookings.forEach((booking) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td data-label="Data">${booking.data}</td>
+                    <td data-label="Horário">${booking.horario}</td>
+                    <td data-label="Acessar">
+                        <button class="btn" data-id="${booking.id}">Acessar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+        } catch (error) {
+            console.error("Erro ao carregar agendamentos:", error);
+            tbody.innerHTML = `<tr><td colspan="3">Ocorreu um erro: ${error.message}. Verifique a console para mais detalhes.</td></tr>`;
+        }
+    }
+
+    // Initial load of bookings when the page is ready
+    loadAndRenderBookings();
+
+    // Event delegation for "Acessar" button clicks
     tbody.addEventListener("click", (event) => {
-        const button = event.target.closest(".btn-access");
+        const button = event.target.closest(".btn"); // Use .btn as per your CSS and HTML
         
         if (button) {
-            const index = button.getAttribute("data-index");
-            const id = button.getAttribute("data-id");
-            const booking = bookings[index];
-            
-            // Armazena o agendamento selecionado no sessionStorage para acesso na próxima página
-            sessionStorage.setItem("selectedBooking", JSON.stringify(booking));
-            
-            // Redireciona para a página de detalhes com o ID como parâmetro
-            window.location.href = `agendamentoDetalhes.html`;
+            const bookingId = button.getAttribute("data-id");
+            if (bookingId) {
+                // Redirect to the details page, passing the ID as a URL parameter
+                window.location.href = `agendamentoDetalhes.html?id=${bookingId}`;
+            } else {
+                console.error("ID do agendamento não encontrado no botão.");
+            }
         }
     });
+
+    // Optional: Logout button (if you have one in your header)
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn && typeof window.logout === 'function') { // Assuming logout function in auth.js
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.logout();
+        });
+    }
 });

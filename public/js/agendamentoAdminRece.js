@@ -1,74 +1,106 @@
-// Aguarda o carregamento completo do DOM
-document.addEventListener("DOMContentLoaded", () => {
-    // Exemplo de dados de agendamentos
-    const bookings = [
-        {
-            id: 1,
-            nome: "João Silva",
-            email: "joao@mail.com",
-            telefone: "(11) 99999-9999",
-            plano: "Avançado",
-            data: "2025-05-20",
-            horario: "14:00",
-            esporte: "Futebol",
-            local: "Estádio XYZ",
-            status: "Pendente"
-        },
-        {
-            id: 2,
-            nome: "Maria Souza",
-            email: "maria@mail.com",
-            telefone: "(21) 88888-8888",
-            plano: "Intermediário",
-            data: "2025-05-21",
-            horario: "16:00",
-            esporte: "Basquete",
-            local: "Ginásio ABC",
-            status: "Pendente"
-        }
-    ];
+// public/js/agendamentoAdminRece.js
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Verificação de Autenticação e Token
+    // Assumes window.checkAuthentication() and window.getAuthToken() are available from auth.js
+    if (typeof window.checkAuthentication === 'function' && !window.checkAuthentication()) {
+        return; // checkAuthentication will handle redirection if not authenticated
+    }
+    const token = (typeof window.getAuthToken === 'function') ? window.getAuthToken() : null;
+
+    if (!token) {
+        alert("Erro de autenticação. Por favor, faça login novamente.");
+        window.location.href = 'login.html'; // Fallback redirect to login
+        return;
+    }
 
     const tbody = document.querySelector("#bookingsTable tbody");
 
     // Verifica se o tbody existe
     if (!tbody) {
-        console.error("Elemento tbody não encontrado");
+        console.error("Elemento tbody #bookingsTable tbody não encontrado no HTML.");
         return;
     }
 
-    // Função para renderizar os agendamentos na tabela
-    function renderBookings() {
-        tbody.innerHTML = "";
-        bookings.forEach((booking, index) => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td data-label="Data">${booking.data}</td>
-                <td data-label="Horário">${booking.horario}</td>
-                <td data-label="Acessar">
-                    <button class="btn btn-access" data-id="${booking.id}" data-index="${index}">Acessar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+    // Função para formatar a data (reutilizável)
+    function formatarData(dataString) {
+        if (!dataString) return 'N/A';
+        try {
+            // Supondo formato 'YYYY-MM-DD' vindo do backend
+            const [ano, mes, dia] = dataString.split('-');
+            const data = new Date(ano, mes - 1, dia); // Mês é 0-indexed no JS (0=Jan, 11=Dez)
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            return data.toLocaleDateString('pt-BR', options);
+        } catch (e) {
+            console.error("Erro ao formatar data:", dataString, e);
+            return dataString; // Retorna a string original em caso de erro
+        }
     }
 
-    // Renderiza os agendamentos inicialmente
-    renderBookings();
+    // Função para carregar e renderizar os agendamentos confirmados do backend
+    async function loadConfirmedBookings() {
+        tbody.innerHTML = '<tr><td colspan="3">Carregando agendamentos confirmados...</td></tr>'; // Placeholder de carregamento
+
+        try {
+            const response = await fetch('http://localhost:8080/api/agendamentos2/confirmados', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // Incluir o token JWT
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Erro HTTP ao buscar agendamentos confirmados: ${response.status} - ${response.statusText}`, errorText);
+
+                if (response.status === 401 || response.status === 403) {
+                    alert("Sessão expirada ou não autorizado. Por favor, faça login novamente.");
+                    if (typeof window.logout === 'function') window.logout();
+                    else window.location.href = 'login.html';
+                }
+                throw new Error(errorText || `Erro ao buscar agendamentos confirmados: ${response.statusText}`);
+            }
+
+            const bookings = await response.json(); // Os dados reais do backend
+
+            tbody.innerHTML = ""; // Limpa o conteúdo de carregamento
+
+            if (bookings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3">Nenhum agendamento confirmado encontrado.</td></tr>';
+            } else {
+                bookings.forEach((booking) => { // Removi o 'index' pois não precisamos mais dele com o ID
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td data-label="Data">${formatarData(booking.data)}</td>
+                        <td data-label="Horário">${booking.horario}</td>
+                        <td data-label="Acessar">
+                            <button class="btn btn-access" data-id="${booking.id}">Acessar</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+        } catch (error) {
+            console.error("Erro ao carregar os agendamentos confirmados:", error);
+            alert(`Erro ao carregar os agendamentos confirmados: ${error.message}`);
+            tbody.innerHTML = '<tr><td colspan="3">Erro ao carregar agendamentos.</td></tr>';
+        }
+    }
+
+    // Carrega os agendamentos ao iniciar a página
+    loadConfirmedBookings();
 
     // Delegação de evento para tratar cliques no botão "Acessar"
     tbody.addEventListener("click", (event) => {
         const button = event.target.closest(".btn-access");
         
         if (button) {
-            const index = button.getAttribute("data-index");
             const id = button.getAttribute("data-id");
-            const booking = bookings[index];
             
-            // Armazena o agendamento selecionado no sessionStorage para acesso na próxima página
-            sessionStorage.setItem("selectedBooking", JSON.stringify(booking));
-            
-            // Redireciona para a página de detalhes com o ID como parâmetro
-            window.location.href = `agendamentosConfirmados.html`;
+            // ⭐ Redireciona para a página de detalhes correta (agendamentoDetalhes.html) com o ID como parâmetro ⭐
+            window.location.href = `agendamentoDetalhes.html?id=${id}`;
         }
     });
 });

@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const userData = JSON.parse(localStorage.getItem('userData') || '{}');
 
     if (!token) {
-        window.location.href = '../login.html';
+        window.location.href = '../views/login.html';
         return;
     }
 
@@ -22,6 +22,21 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => card.style.transform = 'scale(1)', 200);
         });
     });
+
+        // 3. Configurar botão de logout
+    const logoutButton = document.getElementById('logoutButton');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', function () {
+            // Limpa todos os dados de autenticação
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('userData');
+
+            // Redireciona para login
+            window.location.href = 'login.html';
+        });
+    }
 
     // Função global de navegação
     window.navigateTo = function(page) {

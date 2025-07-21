@@ -14,6 +14,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+        // 3. Configurar botão de logout
+    const logoutButton = document.getElementById('logoutButton');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', function () {
+            // Limpa todos os dados de autenticação
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('jwtToken');
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('userData');
+
+            // Redireciona para login
+            window.location.href = 'login.html';
+        });
+    }
+    
     // 3. Efeitos interativos (apenas para usuários comuns)
     const cards = document.querySelectorAll('.service-card');
     cards.forEach(card => {
@@ -32,3 +47,4 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = page;
     };
 });
+
